@@ -425,7 +425,7 @@ let qt;$('#fQ').oninput=e=>{clearTimeout(qt);qt=setTimeout(()=>{S.f.q=e.target.v
 
 /* ---------- data: Google Apps Script + Google Таблица, правки по PIN-коду ---------- */
 // Адрес веб-приложения Apps Script (…/exec). Как получить — см. README.md.
-const API_URL='ВСТАВЬТЕ_АДРЕС_APPS_SCRIPT';
+const API_URL='https://script.google.com/macros/s/AKfycbzidXLzi5LONVQd8pfNA3h1n55c0aJFk8ZazmG3n29n1RenhTBBwQwXQxVglbO1TS9N/exec';
 const API_READY=/^https:\/\/script\.google\.com\//.test(API_URL);
 const call=(fn,...args)=>fetch(API_URL,{method:'POST',redirect:'follow',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({fn,args})})
   .then(r=>{if(!r.ok)throw new Error('Сервер ответил '+r.status);return r.json()})
