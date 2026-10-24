@@ -116,6 +116,8 @@ h1{font-family:var(--f-display);font-weight:700;font-size:clamp(24px,4vw,34px);l
 .pill.plan-s{background:var(--ink-soft);color:var(--ink)}
 .pill.reg-s{background:var(--warn-soft);color:var(--warn)}
 .pill.done-s{background:var(--ok-soft);color:var(--ok)}
+.pill.result-s{background:var(--ink-soft);color:var(--ink);font-weight:600}
+.res{font-size:12px;font-weight:600;color:var(--fg);max-width:16ch;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .pill.wait-s{background:var(--line);color:var(--fg)}
 .pill.prize-s{background:var(--warn);color:var(--card)}
 .pill.fail-s{background:var(--margin-soft);color:var(--margin)}
@@ -202,7 +204,7 @@ label.f input,label.f select,label.f textarea{border:1px solid var(--line);backg
 <script>
 (function(){
 const MONTHS=['Январь','Февраль','Март','Апрель','Май','Июнь','Июль','Август','Сентябрь','Октябрь','Ноябрь','Декабрь'];
-const STATUS={plan:['Планируем','plan-s'],reg:['Зарегистрированы','reg-s'],done:['Написали, ждём итоги','wait-s'],pass:['Прошёл дальше','done-s'],prize:['Призёр / победитель','prize-s'],fail:['Не прошёл','fail-s']};
+const STATUS={plan:['Планируем','plan-s'],reg:['Зарегистрированы','reg-s'],done:['Написали, ждём итоги','wait-s'],result:['Результат','result-s'],pass:['Прошёл дальше','done-s'],prize:['Призёр / победитель','prize-s'],fail:['Не прошёл','fail-s']};
 const ACTIVE=['plan','reg'];const PASSED=['pass','prize'];
 /* допуск к этапу: смотрим предыдущий этап той же серии */
 function prevStage(o){if(!o.series||!(o.stage>1))return null;return S.olys.filter(x=>x.series===o.series&&(x.stage||1)<o.stage).sort((a,b)=>(b.stage||1)-(a.stage||1))[0]||null}
@@ -289,7 +291,7 @@ function renderList(){
         (o.note?'<div class="note">'+esc(o.note)+'</div>':'')+
         '<div class="links">'+(o.link?'<a href="'+esc(o.link)+'" target="_blank" rel="noopener">Сайт олимпиады ↗</a>':'')+(S.canWrite?'<button type="button" data-act="edit-oly" data-id="'+esc(o.id)+'">изменить</button>':'')+'</div></div>'+
         '<div class="side"><div class="plans">'+ps.map(({p,k})=>{const s=STATUS[p.status]||STATUS.plan;
-          return '<button type="button" class="plan" data-act="plan" data-oly="'+esc(o.id)+'" data-kidp="'+esc(k.id)+'" style="--kc:'+kidColor(k)+'" title="'+esc(p.note||'')+'"'+(S.canWrite?'':' disabled')+'><span class="dot">'+esc(initial(k.name))+'</span>'+esc(k.name)+' <span class="pd">'+esc(p.date?fmtD(p.date):'без даты')+'</span>'+(writeGrade(o,k.grade)&&writeGrade(o,k.grade)!==+k.grade?'<span class="pd">за '+writeGrade(o,k.grade)+' кл.</span>':'')+'<span class="pill '+s[1]+'">'+s[0]+'</span></button>'}).join('')+
+          return '<button type="button" class="plan" data-act="plan" data-oly="'+esc(o.id)+'" data-kidp="'+esc(k.id)+'" style="--kc:'+kidColor(k)+'" title="'+esc([p.result,p.note].filter(Boolean).join(' · '))+'"'+(S.canWrite?'':' disabled')+'><span class="dot">'+esc(initial(k.name))+'</span>'+esc(k.name)+' <span class="pd">'+esc(p.date?fmtD(p.date):'без даты')+'</span>'+(writeGrade(o,k.grade)&&writeGrade(o,k.grade)!==+k.grade?'<span class="pd">за '+writeGrade(o,k.grade)+' кл.</span>':'')+(p.result?'<span class="res" title="'+esc(p.result)+'">'+esc(p.result)+'</span>':'')+'<span class="pill '+s[1]+'">'+s[0]+'</span></button>'}).join('')+
           S.kids.filter(k=>(!kidF||k.id===kidF)&&!ps.some(x=>x.k.id===k.id)).map(k=>{const el=eligibility(o,k.id);if(!el||el.state==='none')return '';
             if(el.state==='fail')return '<span class="hint no" style="--kc:'+kidColor(k)+'"><span class="dot">'+esc(initial(k.name))+'</span>'+esc(k.name)+': не прошёл отбор</span>';
             if(el.state==='wait')return '<span class="hint" style="--kc:'+kidColor(k)+'"><span class="dot">'+esc(initial(k.name))+'</span>'+esc(k.name)+': ждём итоги отбора</span>';
@@ -322,11 +324,12 @@ function planModal(olyId,kidId){
     '<label class="f full">Ребёнок<select id="p-kid">'+S.kids.map(k=>'<option value="'+esc(k.id)+'"'+(k.id===kid?' selected':'')+'>'+esc(k.name)+' ('+esc(k.grade)+' кл.)'+(fitsGrade(o,+k.grade)?'':(writeGrade(o,k.grade)?' — за '+writeGrade(o,k.grade)+' кл.':' — не по классу'))+'</option>').join('')+'</select></label>'+
     '<label class="f">Дата участия<input type="date" id="p-date" value="'+esc(defDate)+'"></label>'+
     '<label class="f">Статус<select id="p-status">'+Object.entries(STATUS).map(([v,l])=>'<option value="'+v+'"'+((ex?ex.status:'plan')===v?' selected':'')+'>'+l[0]+'</option>').join('')+'</select></label>'+
-    '<label class="f full">Заметка или результат<input id="p-note" maxlength="140" placeholder="например: решать дома вечером; диплом II степени" value="'+esc(ex?ex.note||'':'')+'"></label>'+
+    '<label class="f full">Результат<input id="p-result" maxlength="80" placeholder="например: 42 балла из 60; 3-е место; диплом II степени; участник" value="'+esc(ex?ex.result||'':'')+'"></label>'+
+    '<label class="f full">Заметка<input id="p-note" maxlength="140" placeholder="например: решать дома вечером" value="'+esc(ex?ex.note||'':'')+'"></label>'+
     '<div class="mfoot full"><span id="p-del-wrap">'+(ex?'<button type="button" class="btn danger small" id="p-del">Убрать план</button>':'')+'</span><div class="r"><button type="button" class="btn" id="p-cancel">Отмена</button><button class="btn primary" type="submit">Сохранить</button></div></div></form>',
   m=>{
     const sync=()=>{const k=m.querySelector('#p-kid').value;const e=S.plans.find(p=>p.olyId===olyId&&p.kidId===k);
-      if(e){m.querySelector('#p-date').value=e.date||'';m.querySelector('#p-status').value=e.status||'plan';m.querySelector('#p-note').value=e.note||''}
+      if(e){m.querySelector('#p-date').value=e.date||'';m.querySelector('#p-status').value=e.status||'plan';m.querySelector('#p-note').value=e.note||'';m.querySelector('#p-result').value=e.result||''}
       m.querySelector('#p-del-wrap').innerHTML=e?'<button type="button" class="btn danger small" id="p-del">Убрать план</button>':'';bindDel()};
     const bindDel=()=>{const b=m.querySelector('#p-del');if(!b)return;b.onclick=()=>{
       if(b.dataset.c){const k=m.querySelector('#p-kid').value;guard(()=>db.doc('plans/'+olyId+'__'+k).delete()).then(ok=>{if(ok){closeModal();toast('План убран')}})}
@@ -345,7 +348,7 @@ function planModal(olyId,kidId){
     m.querySelector('#p-cancel').onclick=closeModal;
     m.querySelector('#pf').onsubmit=e=>{e.preventDefault();const k=m.querySelector('#p-kid').value;
       if(m.querySelector('#pf [type=submit]').disabled)return;
-      const body={olyId,kidId:k,date:m.querySelector('#p-date').value||'',status:m.querySelector('#p-status').value,note:m.querySelector('#p-note').value.trim(),updatedAt:new Date().toISOString()};
+      const body={olyId,kidId:k,date:m.querySelector('#p-date').value||'',status:m.querySelector('#p-status').value,note:m.querySelector('#p-note').value.trim(),result:m.querySelector('#p-result').value.trim(),updatedAt:new Date().toISOString()};
       guard(()=>db.doc('plans/'+olyId+'__'+k).set(body)).then(ok=>{if(ok){closeModal();toast('Сохранено')}})};
   });
 }
