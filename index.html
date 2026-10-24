@@ -1,0 +1,490 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Олимпиадный календарь 4–5</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Golos+Text:wght@400;500;600;700&family=Unbounded:wght@500;700&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+/* Layout: тетрадь в клетку — одна колонка-лист с красной полосой полей; сверху сводка планов, ниже лента олимпиад по месяцам */
+:root{
+  --paper:#f6f7f3; --grid:rgba(60,90,170,.075); --card:#ffffff; --fg:#1b2130; --muted:#5d6577; --line:#dde1ea;
+  --ink:#2747a8; --ink-soft:#e7ecfb; --margin:#cf4436; --margin-soft:#fbe9e6; --ok:#21875a; --ok-soft:#e2f4ea; --warn:#a86a0b; --warn-soft:#fbf0dc;
+  --k1:#2747a8; --k2:#c2410c; --k3:#15803d; --k4:#9333ea; --k5:#0e7490; --k6:#be185d;
+  --f-display:"Unbounded","Golos Text",system-ui,sans-serif; --f-body:"Golos Text",system-ui,-apple-system,"Segoe UI",sans-serif; --f-mono:"JetBrains Mono",ui-monospace,Menlo,monospace;
+  --r:10px;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --paper:#11151f; --grid:rgba(140,170,255,.06); --card:#181e2b; --fg:#e6e9f0; --muted:#9aa3b5; --line:#2a3242;
+  --ink:#8fb0ff; --ink-soft:#1f2a45; --margin:#ff7b6b; --margin-soft:#3a1f1d; --ok:#5fd39a; --ok-soft:#173326; --warn:#f2b54d; --warn-soft:#3a2c12;
+  --k1:#8fb0ff; --k2:#fb9a5b; --k3:#5fd39a; --k4:#c79bff; --k5:#5ccfe6; --k6:#f58fbf; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --paper:#11151f; --grid:rgba(140,170,255,.06); --card:#181e2b; --fg:#e6e9f0; --muted:#9aa3b5; --line:#2a3242;
+  --ink:#8fb0ff; --ink-soft:#1f2a45; --margin:#ff7b6b; --margin-soft:#3a1f1d; --ok:#5fd39a; --ok-soft:#173326; --warn:#f2b54d; --warn-soft:#3a2c12;
+  --k1:#8fb0ff; --k2:#fb9a5b; --k3:#5fd39a; --k4:#c79bff; --k5:#5ccfe6; --k6:#f58fbf; color-scheme:dark}
+
+*,*::before,*::after{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+[hidden]{display:none!important}
+img{max-width:100%}
+body{margin:0;background-color:var(--paper);background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);background-size:22px 22px;color:var(--fg);font-family:var(--f-body);font-size:15px;line-height:1.45}
+.wrap{max-width:1040px;margin:0 auto;padding-block:28px 64px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.sheet{display:grid;gap:22px}
+@media (min-width:900px){.sheet{border-left:2px solid var(--margin);padding-left:28px}}
+button,input,select,textarea{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:2px solid var(--ink);outline-offset:2px}
+a{color:var(--ink)}
+
+header.top{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:14px}
+.eyebrow{font-family:var(--f-mono);font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--margin)}
+h1{font-family:var(--f-display);font-weight:700;font-size:clamp(24px,4vw,34px);line-height:1.1;margin:4px 0 6px;text-wrap:balance}
+.sub{color:var(--muted);max-width:60ch;margin:0}
+.actions{display:flex;gap:8px;flex-wrap:wrap}
+.btn{border:1px solid var(--line);background:var(--card);border-radius:999px;padding:8px 14px;font-weight:500;display:inline-flex;align-items:center;gap:6px}
+.btn:hover{border-color:var(--ink)}
+.btn.primary{background:var(--ink);border-color:var(--ink);color:var(--paper)}
+.btn.danger{color:var(--margin);border-color:var(--margin)}
+.btn.small{padding:5px 11px;font-size:13px}
+.ro-note{font-size:13px;color:var(--warn);background:var(--warn-soft);border-radius:8px;padding:6px 10px}
+
+/* сводка */
+.summary{display:grid;grid-template-columns:minmax(0,1.6fr) minmax(0,1fr);gap:16px}
+@media (max-width:760px){.summary{grid-template-columns:1fr}}
+.panel{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:16px}
+.panel h2{font-family:var(--f-display);font-weight:500;font-size:15px;margin:0 0 10px;display:flex;justify-content:space-between;align-items:baseline;gap:8px}
+.panel h2 small{font-family:var(--f-body);font-weight:400;color:var(--muted);font-size:13px}
+.up-list{display:grid;gap:2px;margin:0;padding:0;list-style:none}
+.up{display:grid;grid-template-columns:92px minmax(0,1fr) auto;gap:10px;align-items:center;padding:7px 0;border-bottom:1px dashed var(--line)}
+.up:last-child{border-bottom:0}
+.up .d{font-family:var(--f-mono);font-size:13px;font-variant-numeric:tabular-nums}
+.up .d b{display:block;font-size:15px}
+.up .t{min-width:0}
+.up .t span{display:block;color:var(--muted);font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.empty{color:var(--muted);font-size:14px;margin:4px 0}
+.kids{display:flex;flex-wrap:wrap;gap:8px}
+.kid{display:inline-flex;align-items:center;gap:7px;border:1px solid var(--line);border-radius:999px;padding:5px 12px 5px 6px;background:var(--card)}
+.kid[aria-pressed="true"]{border-color:var(--kc);box-shadow:inset 0 0 0 1px var(--kc)}
+.dot{width:20px;height:20px;border-radius:50%;background:var(--kc);color:var(--card);font-size:11px;font-weight:700;display:grid;place-items:center;flex:none}
+.kid em{font-style:normal;color:var(--muted);font-size:12px}
+
+/* фильтры */
+.toolbar{display:flex;flex-wrap:wrap;gap:10px;align-items:center;position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--paper);padding-block:10px;border-bottom:1px solid var(--line)}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:999px;overflow:hidden;background:var(--card)}
+.seg button{border:0;background:none;padding:6px 12px;font-size:14px}
+.seg button[aria-pressed="true"]{background:var(--ink);color:var(--paper)}
+.chk{display:inline-flex;gap:6px;align-items:center;font-size:14px;color:var(--muted)}
+.search{flex:1 1 180px;min-width:0;border:1px solid var(--line);background:var(--card);border-radius:999px;padding:7px 14px}
+.count{font-family:var(--f-mono);font-size:12px;color:var(--muted)}
+
+/* лента */
+.month{display:grid;gap:8px}
+.month h3{font-family:var(--f-display);font-weight:500;font-size:14px;letter-spacing:.02em;margin:10px 0 2px;display:flex;align-items:center;gap:10px;color:var(--ink)}
+.month h3::after{content:"";flex:1;height:1px;background:var(--line)}
+.month h3 .now{font-family:var(--f-mono);font-size:11px;color:var(--margin);border:1px solid var(--margin);border-radius:4px;padding:1px 6px;text-transform:uppercase}
+.oly{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:12px 14px;display:grid;grid-template-columns:120px minmax(0,1fr) auto;gap:14px;align-items:start}
+.oly.past{opacity:.6}
+@media (max-width:640px){.oly{grid-template-columns:minmax(0,1fr) auto}.oly .when{grid-column:1/-1}}
+.when{font-family:var(--f-mono);font-size:13px;font-variant-numeric:tabular-nums;line-height:1.35}
+.when .st{display:inline-block;margin-top:4px;font-size:11px;padding:1px 6px;border-radius:4px}
+.st.live{background:var(--ok-soft);color:var(--ok)}
+.st.soon{background:var(--ink-soft);color:var(--ink)}
+.st.past{background:var(--line);color:var(--muted)}
+.body{min-width:0}
+.name{font-weight:600;font-size:16px;display:flex;gap:6px;align-items:baseline;flex-wrap:wrap}
+.star{color:var(--warn)}
+.meta{display:flex;flex-wrap:wrap;gap:6px;margin:6px 0}
+.tag{font-size:12px;border:1px solid var(--line);border-radius:5px;padding:1px 7px;color:var(--muted)}
+.tag.gr{border-color:var(--ink);color:var(--ink);font-family:var(--f-mono)}
+.tag.fin{border-color:var(--margin);color:var(--margin)}
+.tag.k4{background:var(--ink);border-color:var(--ink);color:var(--card);font-weight:600}
+.tag.up5t{border-style:dashed;border-color:var(--warn);color:var(--warn);font-weight:600}
+.oly.up5{border-style:dashed}
+.reg{font-size:13px;color:var(--muted)}
+.reg b{color:var(--fg);font-weight:500}
+.note{font-size:13px;color:var(--muted);margin-top:3px}
+.links{font-size:13px;margin-top:6px;display:flex;gap:12px;flex-wrap:wrap}
+.links button{border:0;background:none;padding:0;color:var(--muted);text-decoration:underline;font-size:13px}
+.side{display:grid;gap:6px;justify-items:end;min-width:0}
+.plans{display:flex;flex-direction:column;gap:5px;align-items:flex-end}
+.plan{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--kc);border-radius:999px;padding:3px 10px 3px 4px;font-size:13px;background:var(--card);max-width:100%}
+.plan .dot{width:18px;height:18px;font-size:10px}
+.plan .pd{font-family:var(--f-mono);font-size:12px}
+.pill{font-size:11px;border-radius:4px;padding:1px 6px}
+.pill.plan-s{background:var(--ink-soft);color:var(--ink)}
+.pill.reg-s{background:var(--warn-soft);color:var(--warn)}
+.pill.done-s{background:var(--ok-soft);color:var(--ok)}
+.pill.wait-s{background:var(--line);color:var(--fg)}
+.pill.prize-s{background:var(--warn);color:var(--card)}
+.pill.fail-s{background:var(--margin-soft);color:var(--margin)}
+.hint{display:inline-flex;align-items:center;gap:6px;border:1px dashed var(--line);border-radius:999px;padding:3px 10px 3px 4px;font-size:12px;color:var(--muted);background:none;max-width:100%}
+.hint .dot{width:18px;height:18px;font-size:10px}
+.hint.yes{border-color:var(--ok);color:var(--ok)}
+.hint.no{text-decoration:line-through;opacity:.8}
+.okc{color:var(--ok)}.badc{color:var(--margin)}
+.warnbox{font-size:13px;border-radius:8px;padding:8px 10px;background:var(--warn-soft);color:var(--warn)}
+.warnbox.bad{background:var(--margin-soft);color:var(--margin)}
+
+/* модалка */
+.overlay{position:fixed;inset:0;background:rgba(10,14,24,.45);z-index:20;display:grid;place-items:center;padding:16px}
+.modal{background:var(--card);border-radius:14px;border:1px solid var(--line);width:min(520px,100%);max-height:calc(100% - 32px);overflow:auto;padding:20px;display:grid;gap:14px}
+.modal h4{font-family:var(--f-display);font-weight:500;font-size:17px;margin:0}
+.modal .ctx{color:var(--muted);font-size:13px;margin-top:-8px}
+.fields{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.fields .full{grid-column:1/-1}
+@media (max-width:480px){.fields{grid-template-columns:1fr}}
+label.f{display:grid;gap:4px;font-size:13px;color:var(--muted)}
+label.f input,label.f select,label.f textarea{border:1px solid var(--line);background:var(--paper);border-radius:8px;padding:8px 10px;color:var(--fg);font-size:15px;min-width:0}
+.mfoot{display:flex;flex-wrap:wrap;gap:8px;justify-content:space-between;align-items:center}
+.mfoot .r{display:flex;gap:8px;margin-left:auto}
+.kidrow{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:6px 0;border-bottom:1px dashed var(--line)}
+.err{color:var(--margin);font-size:13px}
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(20px + env(safe-area-inset-bottom,0px));background:var(--fg);color:var(--paper);padding:8px 16px;border-radius:999px;font-size:14px;z-index:30}
+@media (prefers-reduced-motion:no-preference){.oly{transition:border-color .15s}.oly:hover{border-color:var(--ink)}}
+</style>
+</head>
+<body>
+
+
+<div class="wrap"><div class="sheet">
+  <header class="top">
+    <div>
+      <div class="eyebrow">Сезон 2026/27 · за 4 класс, за 5 — если для 4 нет · математика и информатика</div>
+      <h1>Олимпиадный календарь</h1>
+      <p class="sub">Общий план для родителей: выбирайте олимпиаду, назначайте ребёнку дату участия и отмечайте итог тура: прошёл дальше или нет. Следующий этап открывается только тем, кто прошёл. Изменения видны всем, у кого есть ссылка; вносить их можно с общим PIN-кодом.</p>
+    </div>
+    <div class="actions" id="actions">
+      <button class="btn" id="pinbtn" type="button">Ввести PIN</button>
+      <button class="btn" data-act="kids" type="button">Дети</button>
+      <button class="btn primary" data-act="add-oly" type="button">+ Олимпиада</button>
+    </div>
+  </header>
+  <div id="ro" class="ro-note" hidden>Сейчас изменения недоступны.</div>
+
+  <section class="summary">
+    <div class="panel">
+      <h2>Ближайшие планы <small id="upCount"></small></h2>
+      <ul class="up-list" id="upcoming"><li class="empty">Загружаем планы…</li></ul>
+    </div>
+    <div class="panel">
+      <h2>Дети <small>нажмите, чтобы отфильтровать</small></h2>
+      <div class="kids" id="kids"><p class="empty">Загружаем…</p></div>
+    </div>
+  </section>
+
+  <div class="toolbar">
+    <div class="seg" role="group" aria-label="Класс">
+      <button type="button" data-grade="4" aria-pressed="true">За 4 класс</button>
+      <button type="button" data-grade="45" aria-pressed="false">+ за 5, если нет для 4</button>
+      <button type="button" data-grade="5" aria-pressed="false">Только за 5</button>
+    </div>
+    <label class="chk"><input type="checkbox" id="fStar"> только ⭐ ключевые</label>
+    <label class="chk"><input type="checkbox" id="fPlanned"> только с планами</label>
+    <label class="chk"><input type="checkbox" id="fPast"> показать прошедшие</label>
+    <input class="search" id="fQ" type="search" placeholder="Поиск по названию">
+    <span class="count" id="count"></span>
+  </div>
+
+  <main id="list"><p class="empty">Загружаем олимпиады…</p></main>
+</div></div>
+
+<div class="overlay" id="ov" hidden><div class="modal" id="modal" role="dialog" aria-modal="true"></div></div>
+<div class="overlay" id="pinov" hidden><div class="modal" role="dialog" aria-modal="true" aria-labelledby="pin-title">
+  <h4 id="pin-title">PIN-код родителей</h4><div class="ctx" id="pin-msg"></div>
+  <form id="pin-form" class="fields"><label class="f full">PIN-код<input id="pin-in" inputmode="numeric" autocomplete="off" maxlength="32"></label>
+  <div id="pin-err" class="err full" hidden>Неверный PIN-код</div>
+  <div class="mfoot full"><div class="r"><button type="button" class="btn" id="pin-cancel">Отмена</button><button class="btn primary" type="submit">Сохранить</button></div></div></form>
+</div></div>
+<div class="toast" id="toast" hidden></div>
+
+<script>
+(function(){
+const MONTHS=['Январь','Февраль','Март','Апрель','Май','Июнь','Июль','Август','Сентябрь','Октябрь','Ноябрь','Декабрь'];
+const STATUS={plan:['Планируем','plan-s'],reg:['Зарегистрированы','reg-s'],done:['Написали, ждём итоги','wait-s'],pass:['Прошёл дальше','done-s'],prize:['Призёр / победитель','prize-s'],fail:['Не прошёл','fail-s']};
+const ACTIVE=['plan','reg'];const PASSED=['pass','prize'];
+/* допуск к этапу: смотрим предыдущий этап той же серии */
+function prevStage(o){if(!o.series||!(o.stage>1))return null;return S.olys.filter(x=>x.series===o.series&&(x.stage||1)<o.stage).sort((a,b)=>(b.stage||1)-(a.stage||1))[0]||null}
+function eligibility(o,kidId){const pr=prevStage(o);if(!pr)return null;const p=S.plans.find(x=>x.olyId===pr.id&&x.kidId===kidId);
+  if(!p)return {state:'none',prev:pr};if(p.status==='fail')return {state:'fail',prev:pr};if(PASSED.includes(p.status))return {state:'ok',prev:pr};return {state:'wait',prev:pr}}
+const KC=['--k1','--k2','--k3','--k4','--k5','--k6'];
+const S={olys:[],kids:[],plans:[],loaded:{o:false,k:false,p:false},canWrite:true,
+  f:{grade:'4',kid:null,star:false,planned:false,past:false,q:''}};
+let db=null;
+const $=s=>document.querySelector(s);
+const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const todayISO=()=>{const d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')};
+const fmtD=(iso,o)=>{if(!iso)return '';const d=new Date(iso+'T00:00:00');return isNaN(d)?iso:d.toLocaleDateString('ru-RU',o||{day:'numeric',month:'short'})};
+const kidColor=k=>{const i=S.kids.findIndex(x=>x.id===k.id);return 'var('+KC[(i<0?0:i)%KC.length]+')'};
+const initial=n=>(n||'?').trim().charAt(0).toUpperCase();
+function toast(t){const el=$('#toast');el.textContent=t;el.hidden=false;clearTimeout(toast._t);toast._t=setTimeout(()=>el.hidden=true,2200)}
+function ostate(o){const t=todayISO();if(o.end&&o.end<t)return 'past';if(o.start&&o.start<=t)return 'live';return 'soon'}
+function fitsGrade(o,g){return o.gmin<=g&&o.gmax>=g}
+/* приоритет — свой класс; старший класс только если для своего олимпиады нет */
+function writeGrade(o,g){g=+g||4;if(fitsGrade(o,g))return g;if(fitsGrade(o,g+1))return g+1;return null}
+const only5=o=>!fitsGrade(o,4)&&fitsGrade(o,5);
+function gradeLabel(o){return o.gradesText||(o.gmin===o.gmax?o.gmin+' кл.':o.gmin+'–'+o.gmax+' кл.')}
+
+/* ---------- render ---------- */
+function render(){renderKids();renderUpcoming();renderList();
+  $('#ro').hidden=S.canWrite;
+  document.querySelectorAll('[data-act="add-oly"],[data-act="kids"]').forEach(b=>b.hidden=!S.canWrite&&b.dataset.act==='add-oly');
+}
+function renderKids(){
+  const el=$('#kids');
+  if(!S.loaded.k){return}
+  if(!S.kids.length){el.innerHTML='<p class="empty">Пока никого нет. '+(S.canWrite?'<button class="btn small" data-act="kids" type="button">Добавить ребёнка</button>':'')+'</p>';return}
+  el.innerHTML=S.kids.map(k=>{const ps=S.plans.filter(p=>p.kidId===k.id);const n=ps.filter(p=>ACTIVE.includes(p.status)).length;
+    const ok=ps.filter(p=>PASSED.includes(p.status)).length,bad=ps.filter(p=>p.status==='fail').length;
+    return '<button type="button" class="kid" data-kid="'+esc(k.id)+'" aria-pressed="'+(S.f.kid===k.id)+'" style="--kc:'+kidColor(k)+'" title="в планах: '+n+', прошёл дальше: '+ok+', не прошёл: '+bad+'"><span class="dot">'+esc(initial(k.name))+'</span>'+esc(k.name)+' <em>'+esc(k.grade)+' кл. · планов '+n+(ok?' · <span class="okc">✓'+ok+'</span>':'')+(bad?' · <span class="badc">✗'+bad+'</span>':'')+'</em></button>'}).join('');
+}
+function renderUpcoming(){
+  const el=$('#upcoming');if(!S.loaded.p||!S.loaded.k||!S.loaded.o)return;
+  const t=todayISO();
+  let ps=S.plans.filter(p=>p.date&&p.date>=t&&ACTIVE.includes(p.status||'plan'));
+  if(S.f.kid)ps=ps.filter(p=>p.kidId===S.f.kid);
+  ps.sort((a,b)=>a.date<b.date?-1:1);
+  $('#upCount').textContent=ps.length?('всего '+ps.length):'';
+  if(!ps.length){el.innerHTML='<li class="empty">Здесь появятся назначенные даты. Нажмите «Назначить» у олимпиады в списке ниже.</li>';return}
+  el.innerHTML=ps.slice(0,7).map(p=>{const o=S.olys.find(x=>x.id===p.olyId);const k=S.kids.find(x=>x.id===p.kidId);if(!o||!k)return '';
+    const st=STATUS[p.status]||STATUS.plan;
+    return '<li class="up"><div class="d"><b>'+esc(fmtD(p.date))+'</b>'+esc(fmtD(p.date,{weekday:'short'}))+'</div><div class="t"><strong>'+esc(o.name)+'</strong><span>'+esc(k.name)+(p.note?' · '+esc(p.note):'')+'</span></div><span class="pill '+st[1]+'">'+st[0]+'</span></li>'}).join('');
+}
+function visibleOlys(){
+  const f=S.f;let g=f.grade;
+  const kid=f.kid&&S.kids.find(k=>k.id===f.kid);
+  return S.olys.filter(o=>{
+    if(g==='4'&&!fitsGrade(o,4))return false;
+    if(g==='45'&&!fitsGrade(o,4)&&!fitsGrade(o,5))return false;
+    if(g==='5'&&!only5(o))return false;
+    if(kid&&!writeGrade(o,kid.grade))return false;
+    if(f.star&&!o.star)return false;
+    if(!f.past&&ostate(o)==='past')return false;
+    const ps=S.plans.filter(p=>p.olyId===o.id&&(!kid||p.kidId===kid.id));
+    if(f.planned&&!ps.length)return false;
+    if(f.q&&!(o.name+' '+(o.kind||'')).toLowerCase().includes(f.q.toLowerCase()))return false;
+    return true;
+  }).sort((a,b)=>{const sa=a.start||'9',sb=b.start||'9';if(sa!==sb)return sa<sb?-1:1;
+    if(only5(a)!==only5(b))return only5(a)?1:-1;return a.name<b.name?-1:1});
+}
+function renderList(){
+  const el=$('#list');if(!S.loaded.o)return;
+  if(!S.olys.length){el.innerHTML='<p class="empty">Список олимпиад пуст. '+(S.canWrite?'Добавьте первую кнопкой «+ Олимпиада».':'')+'</p>';$('#count').textContent='';return}
+  const vs=visibleOlys();$('#count').textContent=vs.length+' из '+S.olys.length;
+  if(!vs.length){el.innerHTML='<p class="empty">Ничего не нашлось под эти фильтры.</p>';return}
+  const now=todayISO().slice(0,7);const groups=[];let cur=null;
+  vs.forEach(o=>{const key=(o.start||'').slice(0,7);if(!cur||cur.key!==key){cur={key,items:[]};groups.push(cur)}cur.items.push(o)});
+  const kidF=S.f.kid;
+  el.innerHTML=groups.map(gr=>{const [y,m]=gr.key.split('-');
+    const head=gr.key?MONTHS[+m-1]+' '+y:'Без даты';
+    return '<section class="month"><h3>'+head+(gr.key===now?' <span class="now">сейчас</span>':'')+'</h3>'+gr.items.map(o=>{
+      const st=ostate(o);const stl={live:'идёт',soon:'скоро',past:'прошла'}[st];
+      const ps=S.plans.filter(p=>p.olyId===o.id&&(!kidF||p.kidId===kidF)).map(p=>({p,k:S.kids.find(k=>k.id===p.kidId)})).filter(x=>x.k).sort((a,b)=>(a.p.date||'')<(b.p.date||'')?-1:1);
+      return '<article class="oly'+(st==='past'?' past':'')+(only5(o)?' up5':'')+'">'+
+        '<div class="when">'+esc(o.period||'')+'<br><span class="st '+st+'">'+stl+'</span></div>'+
+        '<div class="body"><div class="name">'+(o.star?'<span class="star" title="Ключевая">★</span>':'')+esc(o.name)+'</div>'+
+        '<div class="meta">'+(only5(o)?'<span class="tag up5t" title="Для 4 класса нет — писать за 5 класс, если правила позволяют">за 5 кл.</span>':'<span class="tag k4">за 4 кл.</span>')+'<span class="tag gr">'+esc(gradeLabel(o))+'</span>'+(o.kind?'<span class="tag">'+esc(o.kind)+'</span>':'')+(o.format?'<span class="tag">'+esc(o.format)+'</span>':'')+(o.final?'<span class="tag fin">для прошедших отбор</span>':'')+(prevStage(o)?'<span class="tag">после: '+esc(prevStage(o).name)+'</span>':'')+'</div>'+
+        (o.reg?'<div class="reg"><b>Регистрация:</b> '+esc(o.reg)+'</div>':'')+
+        (o.note?'<div class="note">'+esc(o.note)+'</div>':'')+
+        '<div class="links">'+(o.link?'<a href="'+esc(o.link)+'" target="_blank" rel="noopener">Сайт олимпиады ↗</a>':'')+(S.canWrite?'<button type="button" data-act="edit-oly" data-id="'+esc(o.id)+'">изменить</button>':'')+'</div></div>'+
+        '<div class="side"><div class="plans">'+ps.map(({p,k})=>{const s=STATUS[p.status]||STATUS.plan;
+          return '<button type="button" class="plan" data-act="plan" data-oly="'+esc(o.id)+'" data-kidp="'+esc(k.id)+'" style="--kc:'+kidColor(k)+'" title="'+esc(p.note||'')+'"'+(S.canWrite?'':' disabled')+'><span class="dot">'+esc(initial(k.name))+'</span>'+esc(k.name)+' <span class="pd">'+esc(p.date?fmtD(p.date):'без даты')+'</span>'+(writeGrade(o,k.grade)&&writeGrade(o,k.grade)!==+k.grade?'<span class="pd">за '+writeGrade(o,k.grade)+' кл.</span>':'')+'<span class="pill '+s[1]+'">'+s[0]+'</span></button>'}).join('')+
+          S.kids.filter(k=>(!kidF||k.id===kidF)&&!ps.some(x=>x.k.id===k.id)).map(k=>{const el=eligibility(o,k.id);if(!el||el.state==='none')return '';
+            if(el.state==='fail')return '<span class="hint no" style="--kc:'+kidColor(k)+'"><span class="dot">'+esc(initial(k.name))+'</span>'+esc(k.name)+': не прошёл отбор</span>';
+            if(el.state==='wait')return '<span class="hint" style="--kc:'+kidColor(k)+'"><span class="dot">'+esc(initial(k.name))+'</span>'+esc(k.name)+': ждём итоги отбора</span>';
+            return '<button type="button" class="hint yes" data-act="plan" data-oly="'+esc(o.id)+'" data-kidp="'+esc(k.id)+'" style="--kc:'+kidColor(k)+'"'+(S.canWrite?'':' disabled')+'><span class="dot">'+esc(initial(k.name))+'</span>'+esc(k.name)+': допущен'+(S.canWrite?' — назначить':'')+'</button>'}).join('')+'</div>'+
+        (S.canWrite?'<button type="button" class="btn small" data-act="plan" data-oly="'+esc(o.id)+'">Назначить</button>':'')+'</div>'+
+      '</article>'}).join('')+'</section>'}).join('');
+}
+
+/* ---------- modals ---------- */
+function openModal(html,onMount){$('#modal').innerHTML=html;$('#ov').hidden=false;onMount&&onMount($('#modal'));const f=$('#modal').querySelector('input,select');f&&f.focus()}
+function closeModal(){$('#ov').hidden=true;$('#modal').innerHTML=''}
+$('#ov').addEventListener('click',e=>{if(e.target.id==='ov')closeModal()});
+document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!$('#ov').hidden)closeModal()});
+async function guard(fn){if(!db){toast('Нет связи с сервером');return false}
+  try{await fn();return true}catch(e){
+    if(e&&e.code==='pin'){toast('Без PIN-кода изменения не сохраняются')}
+    else if(e&&e.code==='bad'){toast('Сервер не принял данные — проверьте поля')}
+    else if(e&&e.code==='quota_exceeded'){toast('Хранилище заполнено, удалите лишние записи')}
+    else toast('Не удалось сохранить, попробуйте ещё раз');return false}}
+
+function planModal(olyId,kidId){
+  const o=S.olys.find(x=>x.id===olyId);if(!o)return;
+  if(!S.kids.length){kidsModal('Сначала добавьте ребёнка — потом можно назначать даты.');return}
+  const suitable=S.kids.filter(k=>writeGrade(o,k.grade));
+  const kid=kidId||S.f.kid||(suitable[0]||S.kids[0]).id;
+  const ex=S.plans.find(p=>p.olyId===olyId&&p.kidId===kid);
+  const defDate=ex?ex.date:(o.start&&o.start>todayISO()&&!o.approx?o.start:'');
+  openModal('<h4>Назначить участие</h4><div class="ctx">'+esc(o.name)+' · '+esc(o.period||'')+'</div>'+
+    '<form id="pf" class="fields"><div id="p-warn" class="full" hidden></div>'+
+    '<label class="f full">Ребёнок<select id="p-kid">'+S.kids.map(k=>'<option value="'+esc(k.id)+'"'+(k.id===kid?' selected':'')+'>'+esc(k.name)+' ('+esc(k.grade)+' кл.)'+(fitsGrade(o,+k.grade)?'':(writeGrade(o,k.grade)?' — за '+writeGrade(o,k.grade)+' кл.':' — не по классу'))+'</option>').join('')+'</select></label>'+
+    '<label class="f">Дата участия<input type="date" id="p-date" value="'+esc(defDate)+'"></label>'+
+    '<label class="f">Статус<select id="p-status">'+Object.entries(STATUS).map(([v,l])=>'<option value="'+v+'"'+((ex?ex.status:'plan')===v?' selected':'')+'>'+l[0]+'</option>').join('')+'</select></label>'+
+    '<label class="f full">Заметка или результат<input id="p-note" maxlength="140" placeholder="например: решать дома вечером; диплом II степени" value="'+esc(ex?ex.note||'':'')+'"></label>'+
+    '<div class="mfoot full"><span id="p-del-wrap">'+(ex?'<button type="button" class="btn danger small" id="p-del">Убрать план</button>':'')+'</span><div class="r"><button type="button" class="btn" id="p-cancel">Отмена</button><button class="btn primary" type="submit">Сохранить</button></div></div></form>',
+  m=>{
+    const sync=()=>{const k=m.querySelector('#p-kid').value;const e=S.plans.find(p=>p.olyId===olyId&&p.kidId===k);
+      if(e){m.querySelector('#p-date').value=e.date||'';m.querySelector('#p-status').value=e.status||'plan';m.querySelector('#p-note').value=e.note||''}
+      m.querySelector('#p-del-wrap').innerHTML=e?'<button type="button" class="btn danger small" id="p-del">Убрать план</button>':'';bindDel()};
+    const bindDel=()=>{const b=m.querySelector('#p-del');if(!b)return;b.onclick=()=>{
+      if(b.dataset.c){const k=m.querySelector('#p-kid').value;guard(()=>db.doc('plans/'+olyId+'__'+k).delete()).then(ok=>{if(ok){closeModal();toast('План убран')}})}
+      else{b.dataset.c='1';b.textContent='Точно убрать?'}}};
+    const warn=()=>{const k=m.querySelector('#p-kid').value;const el=eligibility(o,k);const w=m.querySelector('#p-warn');const sb=m.querySelector('#pf [type=submit]');
+      const has=S.plans.some(p=>p.olyId===olyId&&p.kidId===k);
+      let html='',cls='warnbox';
+      const kk=S.kids.find(x=>x.id===k);const wg=kk&&writeGrade(o,kk.grade);
+      if(kk&&wg&&wg!==+kk.grade)html='Для '+esc(kk.grade)+' класса эта олимпиада не проводится — '+esc(kk.name)+' будет писать за '+wg+' класс. Проверьте в правилах олимпиады, что так можно. ';
+      else if(kk&&!wg){html='Олимпиада не подходит по классу.';cls+=' bad'}
+      if(el&&el.state==='fail'&&!has){html+='Не прошёл предыдущий этап («'+esc(el.prev.name)+'»), поэтому на этот этап не допущен. Если итог отбора указан ошибочно, исправьте его там.';cls+=' bad'}
+      else if(el&&el.state==='wait')html+='Итоги этапа «'+esc(el.prev.name)+'» ещё не отмечены. Можно запланировать заранее.';
+      else if(el&&el.state==='none')html+='Этот этап идёт после «'+esc(el.prev.name)+'». Отметьте там итог, когда он будет известен.';
+      w.hidden=!html;w.className='full '+cls;w.innerHTML=html;sb.disabled=!!(el&&el.state==='fail'&&!has)};
+    m.querySelector('#p-kid').onchange=()=>{sync();warn()};bindDel();warn();
+    m.querySelector('#p-cancel').onclick=closeModal;
+    m.querySelector('#pf').onsubmit=e=>{e.preventDefault();const k=m.querySelector('#p-kid').value;
+      if(m.querySelector('#pf [type=submit]').disabled)return;
+      const body={olyId,kidId:k,date:m.querySelector('#p-date').value||'',status:m.querySelector('#p-status').value,note:m.querySelector('#p-note').value.trim(),updatedAt:new Date().toISOString()};
+      guard(()=>db.doc('plans/'+olyId+'__'+k).set(body)).then(ok=>{if(ok){closeModal();toast('Сохранено')}})};
+  });
+}
+function kidsModal(msg){
+  openModal('<h4>Дети</h4>'+(msg?'<div class="ctx">'+esc(msg)+'</div>':'')+
+    '<div id="klist">'+(S.kids.length?S.kids.map(k=>'<div class="kidrow"><span class="kid" style="--kc:'+kidColor(k)+'"><span class="dot">'+esc(initial(k.name))+'</span>'+esc(k.name)+' <em>'+esc(k.grade)+' кл.</em></span>'+(S.canWrite?'<button type="button" class="btn danger small" data-del="'+esc(k.id)+'">Удалить</button>':'')+'</div>').join(''):'<p class="empty">Пока никого.</p>')+'</div>'+
+    (S.canWrite?'<form id="kf" class="fields"><label class="f">Имя<input id="k-name" required maxlength="40" placeholder="Имя ребёнка"></label><label class="f">Класс<select id="k-grade"><option>4</option><option>5</option></select></label><div class="mfoot full"><div class="r"><button type="button" class="btn" id="k-close">Готово</button><button class="btn primary" type="submit">Добавить</button></div></div></form>':'<div class="mfoot"><div class="r"><button type="button" class="btn" id="k-close">Закрыть</button></div></div>'),
+  m=>{
+    m.querySelector('#k-close').onclick=closeModal;
+    m.querySelectorAll('[data-del]').forEach(b=>b.onclick=async()=>{
+      if(!b.dataset.c){b.dataset.c='1';b.textContent='Удалить вместе с планами?';return}
+      const id=b.dataset.del;const ps=S.plans.filter(p=>p.kidId===id);
+      const ok=await guard(async()=>{for(const p of ps){await db.doc('plans/'+p.id).delete()}await db.doc('kids/'+id).delete()});
+      if(ok){if(S.f.kid===id)S.f.kid=null;kidsModal();toast('Удалено')}});
+    const f=m.querySelector('#kf');if(f)f.onsubmit=async e=>{e.preventDefault();const name=m.querySelector('#k-name').value.trim();if(!name)return;
+      const ok=await guard(()=>db.collection('kids').add({name,grade:m.querySelector('#k-grade').value,createdAt:new Date().toISOString()}));
+      if(ok){toast('Добавлено: '+name);setTimeout(()=>kidsModal(),150)}};
+  });
+}
+function olyModal(id){
+  const o=id?S.olys.find(x=>x.id===id):{gmin:4,gmax:5};if(!o)return;
+  const v=k=>esc(o[k]??'');
+  openModal('<h4>'+(id?'Изменить олимпиаду':'Новая олимпиада')+'</h4><form id="of" class="fields">'+
+    '<label class="f full">Название<input id="o-name" required maxlength="120" value="'+v('name')+'"></label>'+
+    '<label class="f full">Когда (как показывать)<input id="o-period" maxlength="60" placeholder="например: 12–25.11.2026 или Декабрь 2026" value="'+v('period')+'"></label>'+
+    '<label class="f">Начало<input type="date" id="o-start" value="'+v('start')+'"></label>'+
+    '<label class="f">Окончание<input type="date" id="o-end" value="'+v('end')+'"></label>'+
+    '<label class="f">С класса<input type="number" id="o-gmin" min="1" max="11" value="'+v('gmin')+'"></label>'+
+    '<label class="f">По класс<input type="number" id="o-gmax" min="1" max="12" value="'+v('gmax')+'"></label>'+
+    '<label class="f">Тип<input id="o-kind" maxlength="60" placeholder="Перечневая, международная…" value="'+v('kind')+'"></label>'+
+    '<label class="f">Формат<input id="o-format" maxlength="60" placeholder="Онлайн, очно…" value="'+v('format')+'"></label>'+
+    '<label class="f full">Регистрация / дедлайн<input id="o-reg" maxlength="160" value="'+v('reg')+'"></label>'+
+    '<label class="f full">Ссылка<input id="o-link" type="url" placeholder="https://…" value="'+v('link')+'"></label>'+
+    '<label class="f full">Заметка<input id="o-note" maxlength="200" value="'+v('note')+'"></label>'+
+    '<label class="f full">Это следующий этап после<select id="o-prev"><option value="">— самостоятельный этап —</option>'+S.olys.filter(x=>x.id!==id).sort((a,b)=>a.name<b.name?-1:1).map(x=>'<option value="'+esc(x.id)+'"'+(prevStage(o)&&prevStage(o).id===x.id?' selected':'')+'>'+esc(x.name)+'</option>').join('')+'</select></label>'+
+    '<label class="chk full"><input type="checkbox" id="o-star"'+(o.star?' checked':'')+'> ключевая (⭐)</label>'+
+    '<label class="chk full"><input type="checkbox" id="o-final"'+(o.final?' checked':'')+'> только для прошедших отбор</label>'+
+    '<div class="mfoot full">'+(id?'<button type="button" class="btn danger small" id="o-del">Удалить</button>':'')+'<div class="r"><button type="button" class="btn" id="o-cancel">Отмена</button><button class="btn primary" type="submit">Сохранить</button></div></div></form>',
+  m=>{
+    m.querySelector('#o-cancel').onclick=closeModal;
+    const d=m.querySelector('#o-del');if(d)d.onclick=async()=>{
+      if(!d.dataset.c){d.dataset.c='1';d.textContent='Удалить вместе с планами?';return}
+      const ps=S.plans.filter(p=>p.olyId===id);
+      const ok=await guard(async()=>{for(const p of ps){await db.doc('plans/'+p.id).delete()}await db.doc('olympiads/'+id).delete()});
+      if(ok){closeModal();toast('Олимпиада удалена')}};
+    m.querySelector('#of').onsubmit=async e=>{e.preventDefault();const g=s=>m.querySelector(s).value.trim();
+      const start=g('#o-start');const end=g('#o-end')||start;
+      const prevId=g('#o-prev');const prev=prevId&&S.olys.find(x=>x.id===prevId);
+      let series='',stage=1;
+      if(prev){series=prev.series||prev.id;stage=(prev.stage||1)+1}
+      else if(id&&o.series&&!(o.stage>1)){series=o.series;stage=1}
+      const body={name:g('#o-name'),period:g('#o-period')||(start?fmtD(start,{day:'numeric',month:'long',year:'numeric'}):'дата уточняется'),start,end:end<start?start:end,series,stage,
+        gmin:+g('#o-gmin')||1,gmax:+g('#o-gmax')||11,kind:g('#o-kind'),format:g('#o-format'),reg:g('#o-reg'),link:g('#o-link'),note:g('#o-note'),
+        star:m.querySelector('#o-star').checked,final:m.querySelector('#o-final').checked,approx:!!(id&&o.approx&&o.start===start),custom:id?!!o.custom:true,updatedAt:new Date().toISOString()};
+      const ok=await guard(async()=>{
+        if(prev&&!prev.series)await db.doc('olympiads/'+prev.id).update({series:prev.id,stage:1});
+        if(id)await db.doc('olympiads/'+id).set(body);else await db.collection('olympiads').add(body)});
+      if(ok){closeModal();toast('Сохранено')}};
+  });
+}
+
+/* ---------- events ---------- */
+document.addEventListener('click',e=>{
+  const g=e.target.closest('[data-grade]');if(g){S.f.grade=g.dataset.grade;document.querySelectorAll('[data-grade]').forEach(b=>b.setAttribute('aria-pressed',b===g));renderList();return}
+  const k=e.target.closest('[data-kid]');if(k){S.f.kid=S.f.kid===k.dataset.kid?null:k.dataset.kid;render();return}
+  const a=e.target.closest('[data-act]');if(!a)return;
+  const act=a.dataset.act;
+  if(act==='kids')kidsModal();
+  else if(act==='add-oly')olyModal();
+  else if(act==='edit-oly')olyModal(a.dataset.id);
+  else if(act==='plan')planModal(a.dataset.oly,a.dataset.kidp);
+});
+$('#fStar').onchange=e=>{S.f.star=e.target.checked;renderList()};
+$('#fPlanned').onchange=e=>{S.f.planned=e.target.checked;renderList()};
+$('#fPast').onchange=e=>{S.f.past=e.target.checked;renderList()};
+let qt;$('#fQ').oninput=e=>{clearTimeout(qt);qt=setTimeout(()=>{S.f.q=e.target.value.trim();renderList()},150)};
+
+/* ---------- data: Google Apps Script + Google Таблица, правки по PIN-коду ---------- */
+// Адрес веб-приложения Apps Script (…/exec). Как получить — см. README.md.
+const API_URL='ВСТАВЬТЕ_АДРЕС_APPS_SCRIPT';
+const API_READY=/^https:\/\/script\.google\.com\//.test(API_URL);
+const call=(fn,...args)=>fetch(API_URL,{method:'POST',redirect:'follow',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({fn,args})})
+  .then(r=>{if(!r.ok)throw new Error('Сервер ответил '+r.status);return r.json()})
+  .then(j=>{if(!j.ok){const e=new Error(j.error||'Ошибка');e.server=j.error;throw e}return j.result});
+const PIN_KEY='olimp-pin';
+const pinGet=()=>{try{return localStorage.getItem(PIN_KEY)||''}catch(_){return ''}};
+const pinSet=v=>{try{v?localStorage.setItem(PIN_KEY,v):localStorage.removeItem(PIN_KEY)}catch(_){}};
+const store={state:{olympiads:{},kids:{},plans:{}},subs:[]};
+const snapOf=col=>{const m=store.state[col]||{};const docs=Object.keys(m).sort().map(id=>({id,data:()=>m[id]}));return {docs,size:docs.length,empty:!docs.length}};
+const emit=()=>store.subs.forEach(s=>s.fn(snapOf(s.col)));
+let failed=false;
+async function refresh(){
+  try{const st=await call('getState');store.state=st||store.state;failed=false;emit()}
+  catch(e){if(!failed){failed=true;toast('Нет связи с сервером — показываю последние загруженные данные')}store.subs.forEach(s=>s.err&&s.err(e))}
+}
+function askPin(msg){return new Promise(res=>{
+  const ov=$('#pinov');ov.hidden=false;$('#pin-msg').textContent=msg||'Изменения сохраняются только с общим PIN-кодом. Его можно узнать у организатора.';
+  const inp=$('#pin-in');inp.value='';$('#pin-err').hidden=true;setTimeout(()=>inp.focus(),30);
+  const done=v=>{ov.hidden=true;$('#pin-form').onsubmit=null;$('#pin-cancel').onclick=null;res(v)};
+  $('#pin-cancel').onclick=()=>done(null);
+  $('#pin-form').onsubmit=async e=>{e.preventDefault();const v=inp.value.trim();if(!v)return;
+    try{const ok=await call('checkPin',v);
+      if(ok){pinSet(v);updatePinBtn();done(v)}else{$('#pin-err').textContent='Неверный PIN-код';$('#pin-err').hidden=false}}
+    catch(e){$('#pin-err').textContent=e.server||'Нет связи с сервером, попробуйте ещё раз';$('#pin-err').hidden=false}};
+})}
+function updatePinBtn(){const b=$('#pinbtn');if(b)b.textContent=pinGet()?'PIN введён':'Ввести PIN'}
+async function send(writes){
+  const local=JSON.parse(JSON.stringify(store.state));
+  for(const w of writes){const c=store.state[w.col]||(store.state[w.col]={});if(w.op==='delete')delete c[w.id];else if(w.op==='set')c[w.id]=w.data;else c[w.id]=Object.assign({},c[w.id]||{},w.data)}
+  emit();
+  for(let attempt=0;attempt<2;attempt++){
+    let pin=pinGet();if(!pin){pin=await askPin();if(!pin){store.state=local;emit();throw {code:'pin'}}}
+    try{await call('save',pin,writes);setTimeout(refresh,800);return}
+    catch(e){
+      if(e.server==='pin'){pinSet('');updatePinBtn();continue}
+      store.state=local;emit();throw {code:e.server?'bad':'unavailable'};
+    }
+  }
+  store.state=local;emit();throw {code:'pin'};
+}
+const newId=()=>'x'+Date.now().toString(36)+Math.random().toString(36).slice(2,7);
+const docRef=(col,id)=>({set:d=>send([{op:'set',col,id,data:d}]),update:d=>send([{op:'update',col,id,data:d}]),delete:()=>send([{op:'delete',col,id}])});
+db={
+  collection:col=>({onSnapshot(fn,err){const s={col,fn,err};store.subs.push(s);return ()=>{store.subs=store.subs.filter(x=>x!==s)}},
+    add:async d=>{const id=newId();await send([{op:'set',col,id,data:d}]);return docRef(col,id)},doc:id=>docRef(col,id)}),
+  doc:path=>{const [col,id]=path.split('/');return docRef(col,id)}
+};
+(()=>{
+  const sub=(col,key,map)=>db.collection(col).onSnapshot(s=>{S[map]=s.docs.map(d=>Object.assign({id:d.id},d.data()));S.loaded[key]=true;render()},()=>{S.loaded[key]=true;render()});
+  sub('olympiads','o','olys');sub('kids','k','kids');sub('plans','p','plans');
+  updatePinBtn();
+  if(!API_READY){$('#list').innerHTML='<p class="empty">Календарь ещё не подключён к Google Таблице: впишите адрес Apps Script в index.html (см. README).</p>';$('#upcoming').innerHTML='';$('#kids').innerHTML='';return}
+  refresh();
+  setInterval(()=>{if(document.visibilityState==='visible')refresh()},20000);
+  document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')refresh()});
+  $('#pinbtn').onclick=async()=>{if(pinGet()){pinSet('');updatePinBtn();toast('PIN забыт на этом устройстве')}else{const v=await askPin('Введите общий PIN-код, чтобы вносить изменения.');if(v)toast('PIN сохранён на этом устройстве')}};
+})();
+})();
+</script>
+
+</body>
+</html>
